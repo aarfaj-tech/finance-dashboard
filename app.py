@@ -1,51 +1,43 @@
 from flask import Flask, render_template, request
 import yfinance as yf
+import matplotlib
+matplotlib.use('Agg')  
 import matplotlib.pyplot as plt
 import os
 
 app = Flask(__name__)
-os.makedirs("static", exist_ok=True)
 
-@app.route("/", methods=["GET", "POST"])
-def dashboard():
+@app.route("/")
+def home():
+    return render_template("index.html")
 
-    stocks = ["AAPL", "TSLA", "MSFT"]
-    selected = "AAPL"
-    shares = 0
+@app.route("/stock", methods=["POST"])
+def stock():
+    symbol = request.form["symbol"]
 
-    if request.method == "POST":
-        selected = request.form["stock"].upper()
-        shares = float(request.form.get("shares", 0))
+    data = yf.download(symbol, period="6mo")
 
-    data = yf.Ticker(selected)
-    hist = data.history(period="1mo")
+    if data.empty:
+        return "Invalid stock symbol"
 
-    price = round(hist["Close"].iloc[-1], 2)
-    change = round(((hist["Close"].iloc[-1] - hist["Close"].iloc[0]) / hist["Close"].iloc[0]) * 100, 2)
+    # Create chart
+    plt.figure()
+    data["Close"].plot(title=f"{symbol} Stock Price")
 
-    # 📊 CLEAN CHART FIX
-    plt.figure(figsize=(8,4))
-    plt.plot(hist.index, hist["Close"])
     plt.xticks(rotation=45)
     plt.tight_layout()
 
-    chart_path = "static/chart.png"
-    plt.savefig(chart_path)
+    # Ensure static folder exists
+    if not os.path.exists("static"):
+        os.makedirs("static")
+
+    img_path = os.path.join("static", "chart.png")
+    plt.savefig(img_path)
     plt.close()
 
-    # 💰 portfolio value
-    portfolio_value = round(price * shares, 2)
+    return render_template("result.html", symbol=symbol)
 
-    return render_template(
-        "index.html",
-        stock=selected,
-        price=price,
-        change=change,
-        chart=chart_path,
-        portfolio_value=portfolio_value,
-        shares=shares,
-        stocks=stocks
-    )
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
