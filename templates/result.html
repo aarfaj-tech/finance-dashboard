@@ -1,16 +1,47 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Result</title>
+    <title>Stock Result</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #111827;
+            color: white;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .card {
+            background: #1f2937;
+            padding: 20px;
+            border-radius: 12px;
+            width: 60%;
+            margin: auto;
+        }
+
+        img {
+            margin-top: 20px;
+            width: 100%;
+            border-radius: 10px;
+        }
+
+        .green { color: #22c55e; }
+        .red { color: #ef4444; }
+    </style>
 </head>
 <body>
 
-    <h1>{{ symbol }} Stock Chart</h1>
+    <div class="card">
+        <h1>📊 {{ symbol }} Analysis</h1>
 
-    <img src="{{ url_for('static', filename='chart.png') }}">
+        <h2>Price: ${{ price }}</h2>
 
-    <br><br>
-    <a href="/">Go Back</a>
+        <h3 class="{{ 'green' if change >= 0 else 'red' }}">
+            Change: ${{ change }} ({{ percent }}%)
+        </h3>
+
+        <img src="/static/chart.png">
+    </div>
 
 </body>
 </html>
